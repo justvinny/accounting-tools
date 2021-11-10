@@ -1,76 +1,30 @@
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.PDDocumentCatalog;
-import org.apache.pdfbox.pdmodel.interactive.form.PDAcroForm;
-import org.apache.pdfbox.pdmodel.interactive.form.PDField;
-import org.apache.pdfbox.text.PDFTextStripper;
-
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
-import java.util.List;
 import java.io.File;
-import java.io.IOException;
-import java.util.Iterator;
-import java.util.LinkedList;
+import java.util.List;
 
 public class GUI extends JFrame {
+    // Constants
     private static final int FRAME_WIDTH = 550;
     private static final int FRAME_HEIGHT = 120;
 
+    // Fields
     private SpringLayout layout;
     private JFileChooser fileChooser;
     private JLabel labelPath;
     private JTextField fieldPath;
-    private JButton btnBrowse, btnConvert;
+    private JButton btnBrowse;
+    private JButton btnConvert;
     private JProgressBar progressBar;
     private File selectedFile;
+
     public GUI() {
         frameSettings();
-
-        // Init components
-        fileChooser = new JFileChooser();
-        FileNameExtensionFilter fileFilter = new FileNameExtensionFilter("PDF files only", "pdf");
-        fileChooser.setFileFilter(fileFilter);
-
-        labelPath = new JLabel("File Path: ");
-        fieldPath = new JTextField();
-
-        btnBrowse = new JButton("Browse");
-        btnConvert = new JButton("Convert");
-
-        progressBar = new JProgressBar();
-        progressBar.setString("Converting...");
-
-        // Listeners
-        btnBrowse.addActionListener(e -> {
-            fileChooser.showOpenDialog(getContentPane());
-
-            selectedFile = fileChooser.getSelectedFile();
-            fieldPath.setText(selectedFile.getPath());
-        });
-
-        btnConvert.addActionListener(e -> {
-            String textInput = fieldPath.getText();
-            if (textInput.length() > 0 && selectedFile != null) {
-                progressBar.setStringPainted(true);
-                progressBar.setIndeterminate(true);
-
-                List<List<String>> formEntries = PDFUtilities.getFormEntries(selectedFile);
-                Calculations calculations = new Calculations(formEntries);
-                List<List<String>> formEntriesWithClaims = calculations.getEntriesWithClaims();
-                System.out.println(calculations);
-            }
-        });
-
-        // Set layout constraints
+        initComponents();
+        addListeners();
         setLayoutConstraints();
-
-        // Add components
-        getContentPane().add(labelPath);
-        getContentPane().add(fieldPath);
-        getContentPane().add(btnBrowse);
-        getContentPane().add(btnConvert);
-        getContentPane().add(progressBar);
+        addComponents();
     }
 
     private void frameSettings() {
@@ -84,20 +38,94 @@ public class GUI extends JFrame {
         setLocationRelativeTo(null);
     }
 
+    private void initComponents() {
+        fileChooser = new JFileChooser();
+        FileNameExtensionFilter fileFilter = new FileNameExtensionFilter("PDF Files", "pdf");
+        fileChooser.setFileFilter(fileFilter);
+        labelPath = new JLabel("File Path: ");
+        fieldPath = new JTextField();
+        btnBrowse = new JButton("Browse");
+        btnConvert = new JButton("Convert");
+        progressBar = new JProgressBar();
+        progressBar.setString("No Task");
+        progressBar.setStringPainted(true);
+    }
+
+    private void addListeners() {
+        // Open file explorer to choose a PDF to extract data from.
+        btnBrowse.addActionListener(e -> {
+            fileChooser.showOpenDialog(getContentPane());
+
+            selectedFile = fileChooser.getSelectedFile();
+            fieldPath.setText(selectedFile.getPath());
+        });
+
+        // Get input from acro forms from PDF and transform to CSV.
+        btnConvert.addActionListener(e -> {
+            String textInput = fieldPath.getText();
+            if (textInput.length() > 0 && selectedFile != null) {
+                new SwingWorker<Void, Void>() {
+                    @Override
+                    protected Void doInBackground() throws Exception {
+                        toggleLoading();
+                        List<List<String>> formEntries = PDFUtilities.getFormEntries(selectedFile);
+
+                        try {
+                            Calculations calculations = new Calculations(formEntries);
+                            CSVUtilities.writeToCSV(calculations.toString(), selectedFile);
+                        } catch (IllegalArgumentException ex) {
+                            JOptionPane.showMessageDialog(getContentPane(), ex.getMessage(), "Error",
+                                    JOptionPane.ERROR_MESSAGE);
+                        }
+                        return null;
+                    }
+
+                    @Override
+                    protected void done() {
+                        super.done();
+                        toggleLoading();
+                    }
+                }.execute();
+            }
+        });
+    }
+
+    private void toggleLoading() {
+        fieldPath.setEnabled(!fieldPath.isEnabled());
+        progressBar.setIndeterminate(!progressBar.isIndeterminate());
+
+        if (progressBar.isIndeterminate()) {
+            progressBar.setString("Processing...");
+        } else {
+            progressBar.setString("No Task");
+        }
+    }
+
+    private void addComponents() {
+        getContentPane().add(labelPath);
+        getContentPane().add(fieldPath);
+        getContentPane().add(btnBrowse);
+        getContentPane().add(btnConvert);
+        getContentPane().add(progressBar);
+    }
+
     private void setLayoutConstraints() {
+        // Label
         layout.putConstraint(SpringLayout.WEST, labelPath, 10, SpringLayout.WEST, getContentPane());
         layout.putConstraint(SpringLayout.NORTH, labelPath, 13, SpringLayout.NORTH, getContentPane());
 
+        // Text Field
         layout.putConstraint(SpringLayout.WEST, fieldPath, 10, SpringLayout.EAST, labelPath);
         layout.putConstraint(SpringLayout.EAST, fieldPath, -10, SpringLayout.WEST, btnBrowse);
         layout.putConstraint(SpringLayout.NORTH, fieldPath, 13, SpringLayout.NORTH, getContentPane());
 
+        // Buttons
         layout.putConstraint(SpringLayout.EAST, btnConvert, -10, SpringLayout.EAST, getContentPane());
         layout.putConstraint(SpringLayout.NORTH, btnConvert, 10, SpringLayout.NORTH, getContentPane());
-
         layout.putConstraint(SpringLayout.EAST, btnBrowse, -10, SpringLayout.WEST, btnConvert);
         layout.putConstraint(SpringLayout.NORTH, btnBrowse, 10, SpringLayout.NORTH, getContentPane());
 
+        // Progress bar
         layout.putConstraint(SpringLayout.WEST, progressBar, 10, SpringLayout.WEST, getContentPane());
         layout.putConstraint(SpringLayout.EAST, progressBar, -10, SpringLayout.EAST, getContentPane());
         layout.putConstraint(SpringLayout.SOUTH, progressBar, -10, SpringLayout.SOUTH, getContentPane());
