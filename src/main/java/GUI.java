@@ -1,12 +1,20 @@
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDDocumentCatalog;
+import org.apache.pdfbox.pdmodel.interactive.form.PDAcroForm;
+import org.apache.pdfbox.pdmodel.interactive.form.PDField;
+import org.apache.pdfbox.text.PDFTextStripper;
+
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.util.List;
 import java.io.File;
+import java.io.IOException;
+import java.util.Iterator;
+import java.util.LinkedList;
 
 public class GUI extends JFrame {
-    private static final int FRAME_WIDTH = 500;
+    private static final int FRAME_WIDTH = 550;
     private static final int FRAME_HEIGHT = 120;
 
     private SpringLayout layout;
@@ -15,7 +23,7 @@ public class GUI extends JFrame {
     private JTextField fieldPath;
     private JButton btnBrowse, btnConvert;
     private JProgressBar progressBar;
-
+    private File selectedFile;
     public GUI() {
         frameSettings();
 
@@ -36,11 +44,22 @@ public class GUI extends JFrame {
         // Listeners
         btnBrowse.addActionListener(e -> {
             fileChooser.showOpenDialog(getContentPane());
+
+            selectedFile = fileChooser.getSelectedFile();
+            fieldPath.setText(selectedFile.getPath());
         });
 
         btnConvert.addActionListener(e -> {
-            progressBar.setStringPainted(true);
-            progressBar.setIndeterminate(true);
+            String textInput = fieldPath.getText();
+            if (textInput.length() > 0 && selectedFile != null) {
+                progressBar.setStringPainted(true);
+                progressBar.setIndeterminate(true);
+
+                List<List<String>> formEntries = PDFUtilities.getFormEntries(selectedFile);
+                Calculations calculations = new Calculations(formEntries);
+                List<List<String>> formEntriesWithClaims = calculations.getEntriesWithClaims();
+                System.out.println(calculations);
+            }
         });
 
         // Set layout constraints
