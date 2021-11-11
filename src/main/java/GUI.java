@@ -3,11 +3,13 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.io.File;
 import java.util.List;
+import java.util.prefs.Preferences;
 
 public class GUI extends JFrame {
     // Constants
     private static final int FRAME_WIDTH = 550;
     private static final int FRAME_HEIGHT = 120;
+    private static final String LAST_DIRECTORY_KEY = "LastDirectoryID";
 
     // Fields
     private SpringLayout layout;
@@ -18,9 +20,12 @@ public class GUI extends JFrame {
     private JButton btnConvert;
     private JProgressBar progressBar;
     private File selectedFile;
+    private Preferences preferences;
+    private String lastSavedDirectory;
 
     public GUI() {
         frameSettings();
+        initPreferences();
         initComponents();
         addListeners();
         setLayoutConstraints();
@@ -38,8 +43,13 @@ public class GUI extends JFrame {
         setLocationRelativeTo(null);
     }
 
+    private void initPreferences() {
+        preferences = Preferences.userRoot().node(this.getClass().getName());
+        lastSavedDirectory = preferences.get(LAST_DIRECTORY_KEY, "");
+
+    }
     private void initComponents() {
-        fileChooser = new JFileChooser();
+        fileChooser = new JFileChooser(lastSavedDirectory.isEmpty() ? null : lastSavedDirectory);
         FileNameExtensionFilter fileFilter = new FileNameExtensionFilter("PDF Files", "pdf");
         fileChooser.setFileFilter(fileFilter);
         labelPath = new JLabel("File Path: ");
@@ -57,7 +67,10 @@ public class GUI extends JFrame {
             fileChooser.showOpenDialog(getContentPane());
 
             selectedFile = fileChooser.getSelectedFile();
-            fieldPath.setText(selectedFile.getPath());
+            if (selectedFile != null) {
+                preferences.put(LAST_DIRECTORY_KEY, selectedFile.getParent());
+                fieldPath.setText(selectedFile.getPath());
+            }
         });
 
         // Get input from acro forms from PDF and transform to CSV.

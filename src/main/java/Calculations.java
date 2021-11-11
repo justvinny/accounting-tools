@@ -45,7 +45,6 @@ public class Calculations {
                 double castedValue = RegexUtilities.extractNumber(value);
                 entries.get(i).remove(1);
                 entries.get(i).add(String.format("%.2f", castedValue));
-                System.out.println(castedValue);
                 if (entries.get(i).get(0).equals("Phone / Internet")) {
                     claim = castedValue * .5;
                 } else {
