@@ -35,18 +35,25 @@ public class Calculations {
                 continue;
             }
 
+            if (!value.matches(RegexUtilities.VALID_NUMBER_PATTERN)) {
+                throw new IllegalArgumentException(String.format("%s is invalid input.", value));
+            }
+
             double claim = 0.0;
 
             try {
-                int castedValue = Integer.parseInt(value);
+                double castedValue = RegexUtilities.extractNumber(value);
+                entries.get(i).remove(1);
+                entries.get(i).add(String.format("%.2f", castedValue));
+                System.out.println(castedValue);
                 if (entries.get(i).get(0).equals("Phone / Internet")) {
                     claim = castedValue * .5;
                 } else {
                     claim = castedValue * percentageToClaim;
                 }
-                entries.get(i).add(String.valueOf(claim));
+                entries.get(i).add(String.format("%.2f", claim));
             } catch (NumberFormatException ex) {
-                throw new IllegalArgumentException("One of the fields in the PDF is not a proper number.");
+                throw new IllegalArgumentException(String.format("Can't calculate. %s is invalid input.", value));
             }
 
         }
