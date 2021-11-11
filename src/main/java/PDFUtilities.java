@@ -28,7 +28,6 @@ public class PDFUtilities {
             "Interest Expenses (attached certificate from bank)",
             "Rental Cost (if applicable)",
             "Rates",
-            "Other Comments"
     };
 
     public static List<List<String>> getFormEntries(File file) {

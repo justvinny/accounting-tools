@@ -46,8 +46,8 @@ public class GUI extends JFrame {
     private void initPreferences() {
         preferences = Preferences.userRoot().node(this.getClass().getName());
         lastSavedDirectory = preferences.get(LAST_DIRECTORY_KEY, "");
-
     }
+
     private void initComponents() {
         fileChooser = new JFileChooser(lastSavedDirectory.isEmpty() ? null : lastSavedDirectory);
         FileNameExtensionFilter fileFilter = new FileNameExtensionFilter("PDF Files", "pdf");

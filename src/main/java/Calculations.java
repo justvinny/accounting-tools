@@ -3,6 +3,9 @@ import java.util.List;
 public class Calculations {
 
     private double percentageToClaim;
+    private double totalClaims;
+    private double totalValue;
+
     private List<List<String>> entries;
 
     public Calculations(List<List<String>> entries) throws IllegalArgumentException {
@@ -36,13 +39,13 @@ public class Calculations {
             }
 
             if (!value.matches(RegexUtilities.VALID_NUMBER_PATTERN)) {
-                throw new IllegalArgumentException(String.format("%s is invalid input.", value));
+                throw new IllegalArgumentException(String.format("%s is an invalid number..", value));
             }
 
             double claim = 0.0;
-
             try {
                 double castedValue = RegexUtilities.extractNumber(value);
+                totalValue += castedValue;
                 entries.get(i).remove(1);
                 entries.get(i).add(String.format("%.2f", castedValue));
                 if (entries.get(i).get(0).equals("Phone / Internet")) {
@@ -50,11 +53,11 @@ public class Calculations {
                 } else {
                     claim = castedValue * percentageToClaim;
                 }
+                totalClaims += claim;
                 entries.get(i).add(String.format("%.2f", claim));
             } catch (NumberFormatException ex) {
-                throw new IllegalArgumentException(String.format("Can't calculate. %s is invalid input.", value));
+                throw new IllegalArgumentException(String.format("Can't calculate. %s is an invalid number.", value));
             }
-
         }
     }
 
@@ -90,6 +93,8 @@ public class Calculations {
             }
             stringBuilder.setCharAt(stringBuilder.length() - 1, '\n');
         }
+
+        stringBuilder.append(String.format("Total,%.02f,%.02f", totalValue, totalClaims));
 
         return stringBuilder.toString();
     }
