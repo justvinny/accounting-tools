@@ -79,11 +79,10 @@ public class GUI extends JFrame {
             if (textInput.length() > 0 && selectedFile != null) {
                 new SwingWorker<Void, Void>() {
                     @Override
-                    protected Void doInBackground() throws Exception {
+                    protected Void doInBackground() {
                         toggleLoading();
-                        List<List<String>> formEntries = PDFUtilities.getFormEntries(selectedFile);
-
                         try {
+                            List<List<String>> formEntries = PDFUtilities.getFormEntries(selectedFile);
                             Calculations calculations = new Calculations(formEntries);
                             CSVUtilities.writeToCSV(calculations.toString(), selectedFile);
                         } catch (IllegalArgumentException ex) {

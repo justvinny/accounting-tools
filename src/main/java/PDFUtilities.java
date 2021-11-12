@@ -29,8 +29,9 @@ public class PDFUtilities {
             "Rental Cost (if applicable)",
             "Rates",
     };
+    private static final int VALID_FIELD_SIZE = 18; // Number of acro form fields in correct PDF.
 
-    public static List<List<String>> getFormEntries(File file) {
+    public static List<List<String>> getFormEntries(File file) throws IllegalPDFException {
         List<List<String>> amounts = new LinkedList<>();
 
         PDDocument document = null;
@@ -51,11 +52,17 @@ public class PDFUtilities {
 
                 // Value
                 PDField field = valueIterator.next();
-                String value = field.getValueAsString();
+                String value = field.getValueAsString().trim();
 
                 entries.add(key);
-                entries.add(value);
+                if (!key.equals("Percentage to claim")) {
+                    entries.add(value);
+                }
                 amounts.add(entries);
+            }
+
+            if (!checkValidPDF(amounts)) {
+                throw new IllegalPDFException();
             }
         } catch (IOException ex) {
             ex.printStackTrace();
@@ -70,5 +77,9 @@ public class PDFUtilities {
         }
 
         return amounts;
+    }
+
+    private static boolean checkValidPDF(List<List<String>> amounts) {
+        return amounts.size() == VALID_FIELD_SIZE;
     }
 }

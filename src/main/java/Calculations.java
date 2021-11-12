@@ -8,14 +8,14 @@ public class Calculations {
 
     private List<List<String>> entries;
 
-    public Calculations(List<List<String>> entries) throws IllegalArgumentException {
+    public Calculations(List<List<String>> entries) throws IllegalAcroFormInputException {
         this.entries = entries;
         getPercentageToClaim();
         calculateClaims();
         entries.remove(0); // Remove address
     }
 
-    private void getPercentageToClaim() throws IllegalArgumentException {
+    private void getPercentageToClaim() throws IllegalAcroFormInputException {
         String houseArea = entries.get(1).get(1);
         String businessArea = entries.get(2).get(1);
         int houseAreaAmount = houseArea.length() > 0 ? Integer.parseInt(houseArea) : 0;
@@ -24,14 +24,14 @@ public class Calculations {
         if (houseAreaAmount > 0 && businessAreaAmount > 0) {
             percentageToClaim = (double) businessAreaAmount / (double) houseAreaAmount;
         } else {
-            throw new IllegalArgumentException("Area of house and area used for business should not be blank.");
+            throw new IllegalAcroFormInputException("Area of house and area used for business should not be blank.");
         }
 
-        entries.get(3).add(String.valueOf(percentageToClaim));
+        entries.get(3).add(String.format("%.2f", percentageToClaim));
     }
 
-    private void calculateClaims() throws IllegalArgumentException {
-        for (int i = 3; i < entries.size(); i++) {
+    private void calculateClaims() throws IllegalAcroFormInputException {
+        for (int i = 4; i < entries.size(); i++) {
             String value = entries.get(i).get(1);
 
             if (value.isEmpty()) {
@@ -39,7 +39,7 @@ public class Calculations {
             }
 
             if (!value.matches(RegexUtilities.VALID_NUMBER_PATTERN)) {
-                throw new IllegalArgumentException(String.format("%s is an invalid number..", value));
+                throw new IllegalAcroFormInputException(String.format("%s is an invalid number.", value));
             }
 
             double claim = 0.0;
@@ -56,7 +56,7 @@ public class Calculations {
                 totalClaims += claim;
                 entries.get(i).add(String.format("%.2f", claim));
             } catch (NumberFormatException ex) {
-                throw new IllegalArgumentException(String.format("Can't calculate. %s is an invalid number.", value));
+                throw new IllegalAcroFormInputException(String.format("Can't calculate. %s is an invalid number.", value));
             }
         }
     }
