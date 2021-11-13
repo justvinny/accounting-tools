@@ -1,10 +1,12 @@
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 
 public class Calculations {
 
-    private double percentageToClaim;
-    private double totalClaims;
-    private double totalValue;
+    private BigDecimal percentageToClaim;
+    private BigDecimal totalClaims;
+    private BigDecimal totalValue;
 
     private List<List<String>> entries;
 
@@ -18,19 +20,23 @@ public class Calculations {
     private void getPercentageToClaim() throws IllegalAcroFormInputException {
         String houseArea = entries.get(1).get(1);
         String businessArea = entries.get(2).get(1);
-        int houseAreaAmount = houseArea.length() > 0 ? Integer.parseInt(houseArea) : 0;
-        int businessAreaAmount = businessArea.length() > 0 ? Integer.parseInt(businessArea) : 0;
+        BigDecimal houseAreaAmount = houseArea.length() > 0 ? new BigDecimal(houseArea) : new BigDecimal("0");
+        BigDecimal businessAreaAmount = businessArea.length() > 0 ? new BigDecimal(businessArea) : new BigDecimal("0");
 
-        if (houseAreaAmount > 0 && businessAreaAmount > 0) {
-            percentageToClaim = (double) businessAreaAmount / (double) houseAreaAmount;
+        System.out.println(houseAreaAmount + " " + businessAreaAmount);
+        if (houseAreaAmount.compareTo(new BigDecimal("0")) > 0 && businessAreaAmount.compareTo(new BigDecimal("0")) > 0) {
+            percentageToClaim = businessAreaAmount.divide(houseAreaAmount, 4, RoundingMode.HALF_EVEN);
+            System.out.println(percentageToClaim);
         } else {
             throw new IllegalAcroFormInputException("Area of house and area used for business should not be blank.");
         }
 
-        entries.get(3).add(String.format("%.2f", percentageToClaim));
+        entries.get(3).add(percentageToClaim.toString());
     }
 
     private void calculateClaims() throws IllegalAcroFormInputException {
+        totalValue = new BigDecimal("0");
+        totalClaims = new BigDecimal("0");
         for (int i = 4; i < entries.size(); i++) {
             String value = entries.get(i).get(1);
 
@@ -42,19 +48,20 @@ public class Calculations {
                 throw new IllegalAcroFormInputException(String.format("%s is an invalid number.", value));
             }
 
-            double claim = 0.0;
+            BigDecimal decimalValue = new BigDecimal(value);
+            BigDecimal claim;
             try {
-                double castedValue = RegexUtilities.extractNumber(value);
-                totalValue += castedValue;
+                BigDecimal castedValue = RegexUtilities.extractNumber(value);
+                totalValue = totalValue.add(decimalValue);
                 entries.get(i).remove(1);
-                entries.get(i).add(String.format("%.2f", castedValue));
+                entries.get(i).add(castedValue.setScale(2, RoundingMode.HALF_EVEN).toString());
                 if (entries.get(i).get(0).equals("Phone / Internet")) {
-                    claim = castedValue * .5;
+                    claim = decimalValue.multiply(new BigDecimal("0.5"));
                 } else {
-                    claim = castedValue * percentageToClaim;
+                    claim = decimalValue.multiply(percentageToClaim);
                 }
-                totalClaims += claim;
-                entries.get(i).add(String.format("%.2f", claim));
+                totalClaims = totalClaims.add(claim);
+                entries.get(i).add(claim.setScale(2, RoundingMode.HALF_EVEN).toString());
             } catch (NumberFormatException ex) {
                 throw new IllegalAcroFormInputException(String.format("Can't calculate. %s is an invalid number.", value));
             }
@@ -94,7 +101,7 @@ public class Calculations {
             stringBuilder.setCharAt(stringBuilder.length() - 1, '\n');
         }
 
-        stringBuilder.append(String.format("Total,%.02f,%.02f", totalValue, totalClaims));
+        stringBuilder.append(String.format("Total,%s,%s", totalValue.setScale(2, RoundingMode.HALF_EVEN), totalClaims.setScale(2, RoundingMode.HALF_EVEN)));
 
         return stringBuilder.toString();
     }
