@@ -23,10 +23,8 @@ public class Calculations {
         BigDecimal houseAreaAmount = houseArea.length() > 0 ? new BigDecimal(houseArea) : new BigDecimal("0");
         BigDecimal businessAreaAmount = businessArea.length() > 0 ? new BigDecimal(businessArea) : new BigDecimal("0");
 
-        System.out.println(houseAreaAmount + " " + businessAreaAmount);
         if (houseAreaAmount.compareTo(new BigDecimal("0")) > 0 && businessAreaAmount.compareTo(new BigDecimal("0")) > 0) {
             percentageToClaim = businessAreaAmount.divide(houseAreaAmount, 4, RoundingMode.HALF_EVEN);
-            System.out.println(percentageToClaim);
         } else {
             throw new IllegalAcroFormInputException("Area of house and area used for business should not be blank.");
         }
